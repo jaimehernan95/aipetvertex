@@ -21,7 +21,7 @@ function recommend(petInputRaw) {
         }
       ],
       reasons: [
-        "Pugs are prone to breathing issues, skin infections, and obesity-related complications.",
+       
         "Heat sensitivity and snoring suggest brachycephalic syndrome — S3 covers respiratory medication.",
         "Travel increases risk — S3 includes coverage for pet illness while away.",
         "PetSecure supports cross-border coverage (Canada/US), unlike competitors.",

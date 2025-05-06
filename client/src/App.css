@@ -1,105 +1,408 @@
 body {
   margin: 0;
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
   background: rgb(216, 220, 219);
   color: rgb(55, 55, 55);
+  line-height: 1.6;
 }
 
 .app {
   max-width: 800px;
   margin: auto;
-  padding: 2rem;
+  padding: 2rem 1.5rem; /* Added horizontal padding */
+  min-height: 100vh;
 }
 
 h1 {
-  font-size: 2rem;
+  font-size: 2.25rem;
   color: rgb(0, 51, 89);
-  margin-bottom: 1rem;
+  margin-bottom: 1.5rem;
+  font-weight: 800;
+  letter-spacing: -0.025em;
+}
+
+/* Scroll indicator */
+.scroll-indicator {
+  position: fixed;
+  bottom: 100px;
+  right: 2rem;
+  background: rgba(0, 125, 179, 0.9);
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 1rem;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s ease;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.scroll-indicator:hover {
+  background: rgb(0, 125, 179);
+  transform: translateY(-2px);
 }
 
 .chat-box {
   background: #fff;
-  border-radius: 12px;
-  padding: 1rem;
-  height: 400px;
+  border-radius: 1.25rem;
+  padding: 1.5rem;
+  height: 400px !important;
   overflow-y: auto;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
-  margin-bottom: 1rem;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+  margin-bottom: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  position: relative;
+  scroll-behavior: smooth;
+  padding-bottom: 2rem !important;
 }
 
+.chat-box::after {
+  content: '';
+  flex: 1;
+  min-height: 1rem;
+}
+
+
 .chat-message {
-  margin: 0.5rem 0;
-  padding: 0.8rem;
-  border-radius: 8px;
-  white-space: pre-wrap;
-  max-width: 90%;
-  line-height: 1.5;
+  margin: 0;
+  padding: 1rem 1.25rem;
+  border-radius: 1rem;
+  max-width: 80%;
+  position: relative;
+  animation: messageAppear 0.3s ease-out;
+  transition: transform 0.2s ease;
+  flex-shrink: 0; /* Prevent message shrinking */
+}
+
+.chat-message:hover {
+  transform: translateY(-2px);
 }
 
 .chat-message.user {
   background-color: rgb(74, 199, 235);
   color: white;
-  align-self: flex-end;
-  text-align: right;
+  margin-left: auto;
+  border-bottom-right-radius: 4px;
 }
 
 .chat-message.ai {
   background-color: rgb(0, 125, 179);
   color: white;
-  align-self: flex-start;
+  margin-right: auto;
+  border-bottom-left-radius: 4px;
 }
 
 .chat-message.typing {
+  background-color: rgba(0, 125, 179, 0.1);
+  color: rgb(0, 125, 179);
+  padding: 1rem 1.5rem;
+}
+
+.typing-indicator {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
   font-style: italic;
-  opacity: 0.7;
+}
+
+.typing-indicator span {
+  height: 8px;
+  width: 8px;
+  background: rgb(0, 125, 179);
+  border-radius: 50%;
+  animation: bounce 1.4s infinite ease-in-out;
+}
+
+.typing-indicator span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.typing-indicator span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@media (max-width: 640px) {
+  .app {
+    padding: 1.5rem 1.2rem;
+    max-width: 100%;
+    margin: 0 1rem;
+  }
+  
+  .recommendation-container {
+    padding: 1.5rem;
+    margin-left: -0.5rem;
+    margin-right: -0.5rem;
+    border-radius: 1rem;
+  }
+
+  .chat-box {
+    height: 60vh;
+    padding: 1rem;
+  }
+  
+  input[type="text"] {
+    padding: 0.875rem;
+  }
+  
+  button {
+    padding: 0.875rem 1.25rem;
+  }
+}
+
+@keyframes messageAppear {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes bounce {
+  0%, 80%, 100% { 
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-8px);
+  }
 }
 
 .input-box {
   display: flex;
-  gap: 0.5rem;
+  gap: 1rem;
+  position: relative;
 }
 
 input[type="text"] {
   flex: 1;
-  padding: 0.75rem;
+  padding: 1rem 1.5rem;
   font-size: 1rem;
-  border-radius: 8px;
-  border: 1px solid #ccc;
+  border-radius: 1rem;
+  border: 2px solid rgba(0, 0, 0, 0.1);
+  background: white;
+  transition: all 0.3s ease;
+}
+
+input[type="text"]:focus {
+  outline: none;
+  border-color: rgb(74, 199, 235);
+  box-shadow: 0 0 0 3px rgba(74, 199, 235, 0.2);
 }
 
 button {
   background-color: rgb(255, 140, 17);
   color: white;
-  padding: 0.75rem 1.5rem;
+  padding: 0.875rem 2rem;
   border: none;
-  border-radius: 8px;
-  font-weight: bold;
+  border-radius: 1rem;
+  font-weight: 600;
   cursor: pointer;
-  transition: background 0.3s ease;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
 button:hover {
   background-color: rgb(160, 12, 48);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(160, 12, 48, 0.2);
 }
 
-.typing-effect li {
-  list-style: disc;
-  margin-left: 1em;
-  white-space: pre-wrap;
-  animation: fadeIn 0.9s ease-in;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
+/* Keep existing logo styles */
 .logo-container {
   text-align: center;
-  margin-bottom: 1rem;
+  margin-bottom: 2rem;
 }
 
 .app-logo {
-  height: 60px;
+  height: 72px;
   width: auto;
+  transition: transform 0.3s ease;
+}
+
+.app-logo:hover {
+  transform: rotate(-5deg) scale(1.05);
+}
+
+.subheading {
+  color: rgb(100, 116, 139);
+  margin-bottom: 2rem;
+  font-size: 1.1rem;
+}
+
+/* Recommendation Container */
+.recommendation-container {
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(12px);
+  border-radius: 1.5rem;
+  padding: 2rem;
+  margin-top: 1.5rem;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding-bottom: 2.5rem; /* Added bottom padding */
+}
+
+/* Typing Effects */
+/* Typing Results */
+.typing-results {
+  margin: 1.5rem 0;
+  counter-reset: reason-counter;
+  background: rgba(241, 243, 245, 0.4);
+  border-radius: 8px;
+  padding: 1rem 1.25rem;
+  margin: 0.5rem 0;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.thinking {
+  padding: 1rem 1.25rem;
+  margin: 0.5rem 0;
+}
+
+.completed-reason, .typing-reason {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  align-items: baseline;
+}
+
+.completed-reason {
+  opacity: 0;
+  animation: fadeInUp 0.3s ease forwards;
+}
+
+.reason-number {
+  color: rgb(0, 125, 179);
+  font-weight: 600;
+  min-width: 2rem;
+}
+
+.reason-content {
+  color: rgb(55, 55, 55);
+  flex-grow: 1;
+  background: rgba(255, 255, 255, 0.9);
+  padding: 0.8rem;
+  border-radius: 6px;
+  line-height: 1.6;
+}
+
+.typing-reason .reason-content {
+  color: rgb(0, 125, 179);
+  background: rgba(74, 199, 235, 0.1);
+}
+
+.typing-cursor {
+  display: inline-block;
+  width: 8px;
+  height: 1.2em;
+  background: rgb(0, 125, 179);
+  margin-left: 2px;
+  animation: blink 1s step-end infinite;
+  vertical-align: middle;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1 }
+  50% { opacity: 0 }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Table Styles */
+.modern-plan-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: white;
+  border-radius: 1rem;
+  overflow: hidden;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.05);
+}
+
+.modern-plan-table th {
+  background: rgb(0, 51, 89);
+  color: white;
+  padding: 1rem;
+  text-align: left;
+  font-weight: 600;
+}
+
+.modern-plan-table td {
+  padding: 1rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.modern-plan-table tr:last-child td {
+  border-bottom: none;
+}
+
+.modern-plan-table tr.selected-plan td {
+  background-color: rgba(74, 199, 235, 0.1);
+  font-weight: 600;
+}
+
+/* Action Buttons */
+.recommendation-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: 2rem 0;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 1rem;
+}
+
+.icon-button {
+  background: rgba(0, 125, 179, 0.1);
+  color: rgb(0, 125, 179);
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s ease;
+  border: none;
+  cursor: pointer;
+}
+
+.icon-button:hover {
+  background: rgba(0, 125, 179, 0.2);
+  transform: translateY(-1px);
+}
+
+/* CTA Button */
+.cta-button {
+  background: rgb(255, 140, 17);
+  color: white;
+  width: 100%;
+  padding: 1rem;
+  border-radius: 1rem;
+  font-weight: 600;
+  margin: 1.5rem 0 3rem;
+  transition: all 0.3s ease;
+  border: none;
+  cursor: pointer;
+}
+
+.cta-button:hover {
+  background: rgb(160, 12, 48);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(160, 12, 48, 0.2);
 }

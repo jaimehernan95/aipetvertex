@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './App.css';
 import { dogPlans } from '../src/data/plans.js';
-import { Loader2 } from 'lucide-react';
-import { Volume2, ThumbsUp } from 'lucide-react';
-import RecommendationBox from '../src/components/RecommendationBox.jsx'; // Ensure this path matches your project structure
+import { Loader2, Volume2, ThumbsUp } from 'lucide-react';
+import RecommendationBox from '../src/components/RecommendationBox.jsx';
 
 const QUESTIONS = [
   'Is your pet primarily indoor or outdoor?',
@@ -26,12 +25,26 @@ function App() {
   const [isSpeaking, setIsSpeaking] = useState(false);
 
   useEffect(() => {
-    chatRef.current?.scrollTo({ top: chatRef.current.scrollHeight, behavior: 'smooth' });
-  }, [answers, recommendation]);
+    if (chatRef.current && !isFetching) {
+      const chat = chatRef.current;
+      const isNearBottom = chat.scrollHeight - chat.clientHeight - chat.scrollTop < 100;
+      
+      if (isNearBottom) {
+        chat.scrollTo({
+          top: chat.scrollHeight,
+          behavior: 'smooth'
+        });
+      }
+      
+      // Update scroll arrow visibility
+      setShowScrollArrow(!isNearBottom);
+    }
+  }, [answers, recommendation, isFetching]);
+  const [showScrollArrow, setShowScrollArrow] = useState(false);
 
   const speakText = (text) => {
     if (!speechRef.current) return;
-    speechRef.current.cancel(); // Cancel any ongoing speech
+    speechRef.current.cancel();
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = 'en-US';
     utterance.onend = () => setIsSpeaking(false);
@@ -40,6 +53,7 @@ function App() {
     speechRef.current.speak(utterance);
     setIsSpeaking(true);
   };
+
 
   const normalizeInput = (text) => text.toLowerCase().trim();
 
@@ -151,53 +165,85 @@ function App() {
     <div ref={chatRef} className="chat-box">
       {answers.map((ans, i) => (
         <div key={i} className="chat-message user">
-          <div>{QUESTIONS[i]}</div>
-          <strong>{ans}</strong>
+          <div className="question-text">{QUESTIONS[i]}</div>
+          <div className="answer-text">{ans}</div>
         </div>
       ))}
+
       {!recommendation && !isFetching && (
         <div className="chat-message ai">
-          {QUESTIONS[step]}
+          <div className="question-text">{QUESTIONS[step]}</div>
         </div>
       )}
+
       {isFetching && (
-        <div className="chat-message ai thinking">
-          <Loader2 className="spin" size={18} style={{ marginRight: 8 }} /> Thinking...
+        <div className="chat-message ai typing">
+          <div className="typing-indicator">
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
         </div>
       )}
+
+      {/* {recommendation && (
+        <div className="chat-message ai">
+          <div className="recommendation-header">
+            Here's your personalized recommendation:
+          </div>
+        </div>
+      )} */}
+
+{showScrollArrow && (
+  <div className="scroll-indicator" onClick={() => {
+    chatRef.current?.scrollTo({
+      top: chatRef.current.scrollHeight,
+      behavior: 'smooth'
+    });
+  }}>
+    ↓ New messages
+  </div>
+)}
     </div>
   );
 
   return (
-    <div className="App" style={{ padding: '20px', maxWidth: '900px', margin: '0 auto' }}>
-      <h1>PetSecure AI Assistant</h1>
-      <p className="subheading">Answer a few quick questions, and we’ll recommend the best pet insurance plan for you.</p>
+    <div className="App">
+      <div className="app-container">
+        <h1>PetSecure AI Assistant</h1>
+        <p className="subheading">
+          Answer a few quick questions, and we'll recommend the best pet insurance plan for you.
+        </p>
 
-      {renderChat()}
+        {renderChat()}
 
-      <div className="input-box">
-        <input
-          type="text"
-          value={input}
-          disabled={isFetching || !!recommendation}
-          onChange={e => setInput(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && handleNext()}
-          placeholder={recommendation ? 'Recommendation complete' : 'Type your answer...'}
-        />
-        <button onClick={handleNext} disabled={isFetching || !!recommendation}>Send</button>
+        <div className="input-box">
+          <input
+            type="text"
+            value={input}
+            disabled={isFetching || !!recommendation}
+            onChange={(e) => setInput(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleNext()}
+            placeholder={recommendation ? 'Recommendation complete' : 'Type your answer...'}
+          />
+          <button onClick={handleNext} disabled={isFetching || !!recommendation}>
+            Send
+          </button>
+        </div>
+
+        {recommendation && (
+          <RecommendationBox
+            recommendation={recommendation}
+            selectedPlan={selectedPlan}
+            dogPlans={dogPlans}
+            onPlanChange={(planId) => setSelectedPlan(planId)}
+            speakText={speakText}
+            setIsSpeaking={setIsSpeaking}
+            errorMessage={errorMessage}
+          />
+        )}
       </div>
-
-      <RecommendationBox
-        recommendation={recommendation}
-        selectedPlan={selectedPlan}
-        dogPlans={dogPlans}
-        onPlanChange={(planId) => setSelectedPlan(planId)}
-        speakText={speakText}
-        isSpeaking={isSpeaking}
-        errorMessage={errorMessage}
-      />
     </div>
   );
 }
-
 export default App;
