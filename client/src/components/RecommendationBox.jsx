@@ -1,5 +1,6 @@
 import { Volume2, ThumbsUp } from 'lucide-react';
 import React, { useState, useEffect, useRef } from 'react';
+import { formatTextForSpeech } from '../utils/speechHelpers';
 
 function RecommendationBox({
   recommendation,
@@ -60,9 +61,11 @@ function RecommendationBox({
       window.speechSynthesis.cancel();
       setIsSpeaking(false);
     } else {
-      speakText(recommendation.reasons.join(' '));
+      const speechText = formatTextForSpeech(recommendation.reasons.join(' '));
+      speakText(speechText);
     }
   };
+  
 
   if (!recommendation) return null;
 
