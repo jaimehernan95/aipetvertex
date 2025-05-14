@@ -1,14 +1,23 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './App.css';
-import { dogPlans } from '../src/data/plans.js';
-import { Loader2, Volume2, ThumbsUp } from 'lucide-react';
-import RecommendationBox from '../src/components/RecommendationBox.jsx';
+import { dogPlans } from './data/plans';
+import { Loader2 } from 'lucide-react';
+import RecommendationBox from './components/RecommendationBox';
 
 const QUESTIONS = [
   'Is your pet primarily indoor or outdoor?',
   'Does your pet have any health issues? (e.g., snores, heat sensitivity)',
   'Do you visit the vet at least once per year for routine care?'
 ];
+
+const CLIENT_FALLBACK = {
+  plan: 'S2',
+  reasons: ["Technical difficulties - using safe recommendation"],
+  objections: {
+    lowerTier: ["Consider upgrading for better coverage"],
+    higherTier: ["You're already at the top tier"]
+  }
+};
 
 function App() {
   const [step, setStep] = useState(0);
@@ -18,29 +27,25 @@ function App() {
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [isFetching, setIsFetching] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
-  const chatRef = useRef(null);
-
-  const speechRef = useRef(window.speechSynthesis);
-  const utteranceRef = useRef(null);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const chatRef = useRef(null);
+  const speechRef = useRef(typeof window !== 'undefined' ? window.speechSynthesis : null);
 
+  // Scroll handling
   useEffect(() => {
-    if (chatRef.current && !isFetching) {
-      const chat = chatRef.current;
-      const isNearBottom = chat.scrollHeight - chat.clientHeight - chat.scrollTop < 100;
-      
-      if (isNearBottom) {
-        chat.scrollTo({
-          top: chat.scrollHeight,
+    const scrollToBottom = () => {
+      if (chatRef.current) {
+        chatRef.current.scrollTo({
+          top: chatRef.current.scrollHeight,
           behavior: 'smooth'
         });
       }
-      
-      // Update scroll arrow visibility
-      setShowScrollArrow(!isNearBottom);
+    };
+
+    if (isFetching || answers.length > 0 || recommendation) {
+      scrollToBottom();
     }
   }, [answers, recommendation, isFetching]);
-  const [showScrollArrow, setShowScrollArrow] = useState(false);
 
   const speakText = (text) => {
     if (!speechRef.current) return;
@@ -49,201 +54,141 @@ function App() {
     utterance.lang = 'en-US';
     utterance.onend = () => setIsSpeaking(false);
     utterance.onerror = () => setIsSpeaking(false);
-    utteranceRef.current = utterance;
     speechRef.current.speak(utterance);
     setIsSpeaking(true);
   };
 
-
-  const normalizeInput = (text) => text.toLowerCase().trim();
-
-  const fallbackRecommendation = {
-    plan: 'S2',
-    reasons: [
-      "We were unable to retrieve a tailored recommendation, so we've selected a balanced option for most pets.",
-      "Plan S2 provides moderate coverage for accidents, illness, and dental needs.",
-      "It's a great middle-tier plan for most indoor pets."
-    ],
-    objections: {
-      lowerTier: ["S1 may have lower limits and may not include dental or chronic coverage."],
-      higherTier: ["S3 and S4 offer more comprehensive benefits including travel and wellness."]
-    }
-  };
-
   const handleNext = async () => {
     if (!input.trim()) return;
-    const updated = [...answers, input.trim()];
-    setAnswers(updated);
+    const updatedAnswers = [...answers, input.trim()];
+    setAnswers(updatedAnswers);
     setInput('');
-    setErrorMessage('');
 
     if (step < QUESTIONS.length - 1) {
-      setStep(step + 1);
+      setStep(s => s + 1);
     } else {
       setIsFetching(true);
-      await new Promise(resolve => setTimeout(resolve, 900)); // Simulate delay
-      const prompt = updated.join(' | ');
-      const normalizedPrompt = normalizeInput(prompt);
+      setErrorMessage('');
 
-      // Local mock overrides
-      if (normalizedPrompt.includes('pug') || normalizedPrompt.includes('snore') || normalizedPrompt.includes('heat') || normalizedPrompt.includes('flat face')) {
-        const mockS3Response = {
-          plan: 'S3',
-          reasons: [
-            "Pugs are prone to breathing issues, skin infections, and obesity-related complications.",
-            "Heat sensitivity and snoring suggest brachycephalic syndrome — S3 covers respiratory medication.",
-            "Travel increases risk — S3 includes coverage for pet illness while away.",
-            "PetSecure supports cross-border coverage (Canada/US), unlike competitors.",
-            "S3 covers up to $5,000/year with $400 dental and medication benefits.",
-            "Annual deductible applies once per year — competitors charge per condition."
-          ],
-          objections: {
-            lowerTier: [
-              "Lower-tier plans may not cover travel-related or chronic breathing treatments.",
-              "Dental and annual coverage limits are lower in S1 and S2.",
-              "Routine checkups and specialty meds may be partially or not covered."
-            ],
-            higherTier: [
-              "S4 adds wellness and unlimited coverage — great if you want maximum protection."
-            ]
-          }
-        };
-        setRecommendation(mockS3Response);
-        setSelectedPlan(mockS3Response.plan);
-        setIsFetching(false);
-        return;
-      }
+      // Artificial delay to show animation
+    const minDelay = new Promise(resolve => setTimeout(resolve, 2000));
 
-      if (normalizedPrompt.includes('persian')) {
-        const mockCatResponse = {
-          plan: 'S4',
-          reasons: [
-            "Persian cats are prone to several chronic conditions like PKD and breathing issues.",
-            "S4 offers comprehensive coverage including chronic and hereditary conditions, dental, and unlimited annual coverage.",
-            "Supports wellness options like regular grooming and diagnostics.",
-            "Includes specialist referrals often needed for Persians."
-          ],
-          objections: {
-            lowerTier: [
-              "Lower-tier plans may not fully cover hereditary conditions like PKD.",
-              "Dental and chronic condition limits are restricted in S1–S3.",
-              "Routine wellness or grooming-related issues may be out-of-pocket."
-            ],
-            higherTier: [
-              "You're already at the top-tier — great choice for high-risk breeds like Persian cats!"
-            ]
-          }
-        };
-        setRecommendation(mockCatResponse);
-        setSelectedPlan(mockCatResponse.plan);
-        setIsFetching(false);
-        return;
-      }
-
-      // Default AI backend fetch
       try {
-        const res = await fetch('http://localhost:3001/recommend', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ prompt })
-        });
-        if (!res.ok) throw new Error('API error');
-        const data = await res.json();
-        setRecommendation(data);
-        setSelectedPlan(data.plan);
+        const [mockResponse] = await Promise.all([
+          import('./mocks/mockData'),
+          minDelay
+        ]);
+  
+        const normalized = updatedAnswers.join(' | ').toLowerCase();
+        
+        const override = Object.values(mockResponse.mockResponses).find(override => 
+          override.conditions.some(term => normalized.includes(term))
+        );
+
+        if (override) {
+          setRecommendation(override.response);
+          setSelectedPlan(override.response.plan);
+        } else {
+          setRecommendation(mockResponse.fallbackRecommendation);
+          setSelectedPlan(mockResponse.fallbackRecommendation.plan);
+        }
       } catch (error) {
-        setRecommendation(fallbackRecommendation);
-        setSelectedPlan(fallbackRecommendation.plan);
-        setErrorMessage("⚠️ AI is currently unavailable. Here's a default recommendation.");
+        setErrorMessage("Service temporarily unavailable");
+        setRecommendation(CLIENT_FALLBACK);
+        setSelectedPlan(CLIENT_FALLBACK.plan);
       } finally {
         setIsFetching(false);
       }
     }
   };
 
-  const renderChat = () => (
-    <div ref={chatRef} className="chat-box">
-      {answers.map((ans, i) => (
-        <div key={i} className="chat-message user">
-          <div className="question-text">{QUESTIONS[i]}</div>
-          <div className="answer-text">{ans}</div>
-        </div>
-      ))}
-
-      {!recommendation && !isFetching && (
-        <div className="chat-message ai">
-          <div className="question-text">{QUESTIONS[step]}</div>
-        </div>
-      )}
-
-      {isFetching && (
-        <div className="chat-message ai typing">
-          <div className="typing-indicator">
-            <span></span>
-            <span></span>
-            <span></span>
-          </div>
-        </div>
-      )}
-
-      {/* {recommendation && (
-        <div className="chat-message ai">
-          <div className="recommendation-header">
-            Here's your personalized recommendation:
-          </div>
-        </div>
-      )} */}
-
-{showScrollArrow && (
-  <div className="scroll-indicator" onClick={() => {
-    chatRef.current?.scrollTo({
-      top: chatRef.current.scrollHeight,
-      behavior: 'smooth'
-    });
-  }}>
-    ↓ New messages
-  </div>
-)}
-    </div>
-  );
-
   return (
-    <div className="App">
-      <div className="app-container">
-        <h1>PetSecure AI Assistant</h1>
-        <p className="subheading">
-          Answer a few quick questions, and we'll recommend the best pet insurance plan for you.
+    <main className="app-container">
+      <header className="app-header">
+        <h1 className="app-title">PetSecure AI Assistant</h1>
+        <p className="app-subtitle">
+          Get personalized pet insurance recommendations through our AI analysis
         </p>
+      </header>
 
-        {renderChat()}
-
-        <div className="input-box">
-          <input
-            type="text"
-            value={input}
-            disabled={isFetching || !!recommendation}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleNext()}
-            placeholder={recommendation ? 'Recommendation complete' : 'Type your answer...'}
-          />
-          <button onClick={handleNext} disabled={isFetching || !!recommendation}>
-            Send
-          </button>
-        </div>
-
-        {recommendation && (
-          <RecommendationBox
-            recommendation={recommendation}
-            selectedPlan={selectedPlan}
-            dogPlans={dogPlans}
-            onPlanChange={(planId) => setSelectedPlan(planId)}
-            speakText={speakText}
-            setIsSpeaking={setIsSpeaking}
-            errorMessage={errorMessage}
-          />
-        )}
+      <div ref={chatRef} className="chat-box">
+  {answers.map((answer, index) => (
+    <div key={`user-${index}`} className="chat-message user">
+      <div className="message-content">
+        <p className="question-text">{QUESTIONS[index]}</p>
+        <p className="answer-text">{answer}</p>
       </div>
     </div>
+  ))}
+
+    {/* Show thinking animation immediately after last user message */}
+    {isFetching && (
+  <div className="chat-message ai typing">
+    <div className="thinking-container">
+      <div className="neural-pulse">
+        <div className="node"></div>
+        <div className="node"></div>
+        <div className="node"></div>
+      </div>
+      <div className="thinking-status">
+        <span className="processing-text">Analyzing responses</span>
+        <div className="activity-track">
+          <div className="wave"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+)}
+
+  {/* Current question (only if not fetching) */}
+  {!recommendation && !isFetching && (
+    <div className="chat-message ai">
+      <div className="message-content">
+        <p>{QUESTIONS[step]}</p>
+      </div>
+    </div>
+  )}
+
+      </div>
+
+      <div className="input-container">
+        <input
+          type="text"
+          value={input}
+          disabled={isFetching || !!recommendation}
+          onChange={(e) => setInput(e.target.value)}
+          onKeyDown={(e) => e.key === 'Enter' && handleNext()}
+          placeholder={recommendation ? 'Session completed' : 'Type your answer...'}
+          aria-label="Pet information input"
+        />
+        <button
+          onClick={handleNext}
+          disabled={isFetching || !!recommendation}
+          className="submit-button"
+        >
+          {isFetching ? (
+            <>
+              <Loader2 className="spin-icon" />
+              <span className="sr-only">Processing...</span>
+            </>
+          ) : 'Send'}
+        </button>
+      </div>
+
+      {recommendation && (
+        <RecommendationBox
+          recommendation={recommendation}
+          selectedPlan={selectedPlan}
+          dogPlans={dogPlans}
+          onPlanChange={setSelectedPlan}
+          speakText={speakText}
+          isSpeaking={isSpeaking}
+          setIsSpeaking={setIsSpeaking}
+          errorMessage={errorMessage}
+        />
+      )}
+    </main>
   );
 }
+
 export default App;

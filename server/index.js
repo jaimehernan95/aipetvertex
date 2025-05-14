@@ -1,19 +1,15 @@
+// server/index.js
 const express = require('express');
 const cors = require('cors');
-const bodyParser = require('body-parser');
-const recommend = require('./recommender');
 
 const app = express();
 const PORT = 3001;
 
 app.use(cors());
-app.use(bodyParser.json());
+app.use(express.json());
 
-app.post('/recommend', (req, res) => {
-  const { prompt } = req.body;
-  const recommendation = recommend(prompt);
-  res.json(recommendation);
-});
+// Remove the mockData import and recommendation endpoint
+// Add any real API endpoints you need here
 
 app.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
